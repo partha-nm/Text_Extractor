@@ -333,25 +333,15 @@ async function answerQuestion(question, contextText) {
     ? '...' + contextText.substring(contextText.length - maxContextLength)
     : contextText;
 
-  // Construct the prompt
-  const prompt = `Based on the following text, please answer the question. If the answer cannot be found in the text, say so.
-
-Text:
-${truncatedContext}
-
-Question: ${question}
-
-Answer:`;
-
   try {
-    // Call Ollama through background script to avoid CORS issues
+    // Call API through background script to avoid CORS issues
     const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'callOllama',
         data: {
           endpoint: config.endpoint,
-          model: config.model,
-          prompt: prompt
+          text: truncatedContext,
+          question: question
         }
       }, (response) => {
         if (chrome.runtime.lastError) {
@@ -458,13 +448,12 @@ async function testOllamaConnection() {
   statusDiv.style.display = 'block';
 
   try {
-    // Call Ollama through background script to avoid CORS issues
+    // Call API through background script to avoid CORS issues
     const response = await new Promise((resolve, reject) => {
       chrome.runtime.sendMessage({
         action: 'testOllamaConnection',
         data: {
-          endpoint: endpoint,
-          model: model
+          endpoint: endpoint
         }
       }, (response) => {
         if (chrome.runtime.lastError) {

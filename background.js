@@ -42,7 +42,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Handle API calls (moved to background to avoid CORS 403 errors)
   if (request.action === 'callOllama') {
-    const { endpoint, model, prompt } = request.data;
+    const { endpoint, text, question } = request.data;
     
     fetch(endpoint, {
       method: 'POST',
@@ -50,7 +50,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: prompt
+        text: text,
+        question: question
       })
     })
     .then(response => {
@@ -62,9 +63,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return response.json();
     })
     .then(data => {
-      // Handle response - could be direct text or object with response field
+      // Handle response - server returns JSON with answer field
       let responseText = '';
-      if (typeof data === 'string') {
+      if (data.answer) {
+        responseText = data.answer;
+      } else if (typeof data === 'string') {
         responseText = data;
       } else if (data.response) {
         responseText = data.response;
@@ -92,7 +95,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Test API connection
   if (request.action === 'testOllamaConnection') {
-    const { endpoint, model } = request.data;
+    const { endpoint } = request.data;
     
     fetch(endpoint, {
       method: 'POST',
@@ -100,7 +103,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: 'Say "Hello"'
+        text: 'Test text for connection',
+        question: 'Say "Hello"'
       })
     })
     .then(response => {
