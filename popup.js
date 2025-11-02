@@ -76,7 +76,7 @@ async function extractCurrentPage() {
   
   extractBtn.disabled = true;
   statusDiv.className = 'status-message info';
-  statusDiv.textContent = 'Extracting text...';
+  statusDiv.textContent = 'Extracting highlighted text...';
   statusDiv.style.display = 'block';
   previewDiv.classList.remove('show');
   
@@ -87,44 +87,23 @@ async function extractCurrentPage() {
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: () => {
-        // Remove script and style elements
-        const scripts = document.querySelectorAll('script, style, noscript');
-        scripts.forEach(el => el.remove());
-
-        // Get the main content area
-        let contentElement = document.querySelector('article') || 
-                            document.querySelector('main') || 
-                            document.body;
-
-        // Clone to avoid modifying the original DOM
-        const clone = contentElement.cloneNode(true);
-
-        // Remove unwanted elements
-        const unwantedSelectors = [
-          'nav', 'header', 'footer', 'aside', 
-          '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
-          '.ad', '.advertisement', '.ads', '[class*="ad-"]'
-        ];
+        // Get selected/highlighted text
+        const selection = window.getSelection();
+        let selectedText = '';
         
-        unwantedSelectors.forEach(selector => {
-          clone.querySelectorAll(selector).forEach(el => el.remove());
-        });
-
-        // Get text content
-        const text = clone.innerText || clone.textContent || '';
-        
-        // Clean up
-        const cleanedText = text
-          .replace(/\s+/g, ' ')
-          .replace(/\n{3,}/g, '\n\n')
-          .trim();
+        if (selection && selection.toString().trim().length > 0) {
+          selectedText = selection.toString().trim();
+        } else {
+          // If no selection, return an error message
+          return null;
+        }
 
         return {
           url: window.location.href,
           title: document.title,
-          text: cleanedText,
+          text: selectedText,
           timestamp: new Date().toISOString(),
-          wordCount: cleanedText.split(/\s+/).filter(word => word.length > 0).length
+          wordCount: selectedText.split(/\s+/).filter(word => word.length > 0).length
         };
       }
     });
@@ -132,12 +111,19 @@ async function extractCurrentPage() {
     if (results && results[0] && results[0].result) {
       const extractedData = results[0].result;
       
+      // Check if user selected any text
+      if (!extractedData) {
+        statusDiv.className = 'status-message error';
+        statusDiv.textContent = '✗ No text selected. Please highlight the text you want to extract.';
+        return;
+      }
+      
       // Save to storage
       await saveToStorage(extractedData);
       
       // Show success
       statusDiv.className = 'status-message success';
-      statusDiv.textContent = `✓ Extracted ${extractedData.wordCount} words from "${extractedData.title}"`;
+      statusDiv.textContent = `✓ Extracted ${extractedData.wordCount} words from selected text`;
       
       // Show preview
       previewDiv.textContent = extractedData.text.substring(0, 500) + 
@@ -395,7 +381,7 @@ async function getOllamaConfig() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['ollamaEndpoint', 'ollamaModel'], (result) => {
       resolve({
-        endpoint: result.ollamaEndpoint || 'http://localhost:8081',
+        endpoint: result.ollamaEndpoint || 'http://localhost:8081/v1/analyze',
         model: result.ollamaModel || '' // Model field not used with custom server
       });
     });
