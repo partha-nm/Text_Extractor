@@ -61,20 +61,20 @@
     <!-- Settings Tab -->
     <div id="settingsSection" class="tab-section">
       <div class="section-header">
-        <h2>Ollama Settings</h2>
+        <h2>API Settings</h2>
       </div>
       <div class="info-box">
-        <p>Configure your local Ollama instance. Make sure Ollama is running on your machine.</p>
+        <p>Configure your local API server. Make sure your server is running on your machine.</p>
       </div>
       <div class="form-group">
-        <label for="ollamaEndpoint">Ollama API Endpoint:</label>
-        <input type="text" id="ollamaEndpoint" class="form-control" placeholder="http://localhost:11434/api/generate" value="http://localhost:11434/api/generate">
-        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Default: http://localhost:11434/api/generate</small>
+        <label for="ollamaEndpoint">API Endpoint:</label>
+        <input type="text" id="ollamaEndpoint" class="form-control" placeholder="http://localhost:8081" value="http://localhost:8081">
+        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Your server endpoint URL</small>
       </div>
       <div class="form-group">
-        <label for="ollamaModel">Model Name:</label>
-        <input type="text" id="ollamaModel" class="form-control" placeholder="llama2" value="llama2">
-        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Examples: llama2, mistral, llama3, codellama, etc.</small>
+        <label for="ollamaModel">Server Identifier (Optional):</label>
+        <input type="text" id="ollamaModel" class="form-control" placeholder="" value="">
+        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Optional identifier for your server (not used in API calls)</small>
       </div>
       <button id="saveSettingsBtn" class="primary-btn">Save Settings</button>
       <div id="settingsStatus" class="status-message"></div>

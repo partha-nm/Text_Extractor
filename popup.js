@@ -320,11 +320,11 @@ async function askQuestion() {
 }
 
 async function answerQuestion(question, contextText) {
-  // Get Ollama configuration
+  // Get API configuration
   const config = await getOllamaConfig();
   
-  if (!config.endpoint || !config.model) {
-    throw new Error('Ollama settings not configured. Please go to Settings tab and configure Ollama.');
+  if (!config.endpoint) {
+    throw new Error('API settings not configured. Please go to Settings tab and configure your API endpoint.');
   }
 
   // Truncate context if too long (keep last 8000 chars to preserve end of document)
@@ -367,7 +367,7 @@ Answer:`;
     return response.response;
   } catch (error) {
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Cannot connect')) {
-      throw new Error('Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.');
+      throw new Error('Cannot connect to the API server. Make sure your server is running and the endpoint is correct.');
     }
     throw error;
   }
@@ -405,8 +405,8 @@ async function getOllamaConfig() {
   return new Promise((resolve) => {
     chrome.storage.local.get(['ollamaEndpoint', 'ollamaModel'], (result) => {
       resolve({
-        endpoint: result.ollamaEndpoint || 'http://localhost:11434/api/generate',
-        model: result.ollamaModel || 'llama2'
+        endpoint: result.ollamaEndpoint || 'http://localhost:8081',
+        model: result.ollamaModel || '' // Model field not used with custom server
       });
     });
   });
@@ -419,11 +419,6 @@ async function saveOllamaSettings() {
 
   if (!endpoint) {
     showStatus('settingsStatus', 'Please enter an endpoint', 'error');
-    return;
-  }
-
-  if (!model) {
-    showStatus('settingsStatus', 'Please enter a model name', 'error');
     return;
   }
 
@@ -453,8 +448,8 @@ async function testOllamaConnection() {
   const endpoint = document.getElementById('ollamaEndpoint').value.trim();
   const model = document.getElementById('ollamaModel').value.trim();
 
-  if (!endpoint || !model) {
-    showStatus('settingsStatus', 'Please fill in both endpoint and model name', 'error');
+  if (!endpoint) {
+    showStatus('settingsStatus', 'Please enter an endpoint', 'error');
     return;
   }
 
@@ -483,11 +478,11 @@ async function testOllamaConnection() {
     });
 
     statusDiv.className = 'status-message success';
-    statusDiv.textContent = response.message || `✓ Connection successful! Model "${model}" is available.`;
+    statusDiv.textContent = response.message || `✓ Connection successful! API server is responding.`;
   } catch (error) {
     statusDiv.className = 'status-message error';
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Cannot connect')) {
-      statusDiv.textContent = '✗ Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.';
+      statusDiv.textContent = '✗ Cannot connect to the API server. Make sure your server is running and the endpoint is correct.';
     } else {
       statusDiv.textContent = `✗ ${error.message}`;
     }

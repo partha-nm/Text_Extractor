@@ -40,7 +40,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
-  // Handle Ollama API calls (moved to background to avoid CORS 403 errors)
+  // Handle API calls (moved to background to avoid CORS 403 errors)
   if (request.action === 'callOllama') {
     const { endpoint, model, prompt } = request.data;
     
@@ -50,33 +50,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model,
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9,
-        }
+        text: prompt
       })
     })
     .then(response => {
       if (!response.ok) {
         return response.text().then(errorText => {
-          throw new Error(`Ollama API error: ${response.status} ${response.statusText}. ${errorText}`);
+          throw new Error(`API error: ${response.status} ${response.statusText}. ${errorText}`);
         });
       }
       return response.json();
     })
     .then(data => {
-      if (data.response) {
-        sendResponse({ success: true, response: data.response.trim() });
+      // Handle response - could be direct text or object with response field
+      let responseText = '';
+      if (typeof data === 'string') {
+        responseText = data;
+      } else if (data.response) {
+        responseText = data.response;
+      } else if (data.text) {
+        responseText = data.text;
+      } else if (data.message) {
+        responseText = data.message;
       } else {
-        sendResponse({ success: false, error: 'Invalid response from Ollama API' });
+        // If response is an object, try to stringify useful fields
+        responseText = JSON.stringify(data);
       }
+      
+      sendResponse({ success: true, response: responseText.trim() });
     })
     .catch(error => {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        sendResponse({ success: false, error: 'Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.' });
+        sendResponse({ success: false, error: 'Cannot connect to the API server. Make sure your server is running and the endpoint is correct.' });
       } else {
         sendResponse({ success: false, error: error.message });
       }
@@ -85,7 +90,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true; // Keep channel open for async response
   }
 
-  // Test Ollama connection
+  // Test API connection
   if (request.action === 'testOllamaConnection') {
     const { endpoint, model } = request.data;
     
@@ -95,9 +100,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model,
-        prompt: 'Say "Hello"',
-        stream: false
+        text: 'Say "Hello"'
       })
     })
     .then(response => {
@@ -109,11 +112,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return response.json();
     })
     .then(data => {
-      sendResponse({ success: true, message: `✓ Connection successful! Model "${model}" is available.` });
+      sendResponse({ success: true, message: `✓ Connection successful! API server is responding.` });
     })
     .catch(error => {
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        sendResponse({ success: false, error: '✗ Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.' });
+        sendResponse({ success: false, error: '✗ Cannot connect to the API server. Make sure your server is running and the endpoint is correct.' });
       } else {
         sendResponse({ success: false, error: `✗ ${error.message}` });
       }
