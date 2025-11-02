@@ -344,36 +344,29 @@ Question: ${question}
 Answer:`;
 
   try {
-    const response = await fetch(config.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: config.model,
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9,
+    // Call Ollama through background script to avoid CORS issues
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: 'callOllama',
+        data: {
+          endpoint: config.endpoint,
+          model: config.model,
+          prompt: prompt
         }
-      })
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (response && response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.error || 'Unknown error occurred'));
+        }
+      });
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}. ${errorText}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.response) {
-      return data.response.trim();
-    } else {
-      throw new Error('Invalid response from Ollama API');
-    }
+    return response.response;
   } catch (error) {
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Cannot connect')) {
       throw new Error('Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.');
     }
     throw error;
@@ -470,29 +463,30 @@ async function testOllamaConnection() {
   statusDiv.style.display = 'block';
 
   try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: model,
-        prompt: 'Say "Hello"',
-        stream: false
-      })
+    // Call Ollama through background script to avoid CORS issues
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: 'testOllamaConnection',
+        data: {
+          endpoint: endpoint,
+          model: model
+        }
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (response && response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.error || 'Unknown error occurred'));
+        }
+      });
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Connection failed: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
     statusDiv.className = 'status-message success';
-    statusDiv.textContent = `✓ Connection successful! Model "${model}" is available.`;
+    statusDiv.textContent = response.message || `✓ Connection successful! Model "${model}" is available.`;
   } catch (error) {
     statusDiv.className = 'status-message error';
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError') || error.message.includes('Cannot connect')) {
       statusDiv.textContent = '✗ Cannot connect to Ollama. Make sure Ollama is running and the endpoint is correct.';
     } else {
       statusDiv.textContent = `✗ ${error.message}`;
