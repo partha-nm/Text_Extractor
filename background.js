@@ -63,14 +63,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return response.json();
     })
     .then(data => {
-      // Handle response - server returns JSON with answer field
+      // Handle response - server returns JSON with response field
       let responseText = '';
-      if (data.answer) {
+      if (data.response) {
+        responseText = data.response;
+      } else if (data.answer) {
         responseText = data.answer;
       } else if (typeof data === 'string') {
         responseText = data;
-      } else if (data.response) {
-        responseText = data.response;
       } else if (data.text) {
         responseText = data.text;
       } else if (data.message) {
