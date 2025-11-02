@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Text Extractor & Q&A</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📄 Text Extractor & Q&A</h1>
+    </header>
+
+    <div class="tab-buttons">
+      <button id="extractTab" class="tab-btn active">Extract</button>
+      <button id="cachedTab" class="tab-btn">Cached</button>
+      <button id="qaTab" class="tab-btn">Q&A</button>
+      <button id="settingsTab" class="tab-btn">Settings</button>
+    </div>
+
+    <!-- Extract Tab -->
+    <div id="extractSection" class="tab-section active">
+      <div class="info-box">
+        <p>Current page: <strong id="currentPageUrl"></strong></p>
+      </div>
+      <button id="extractBtn" class="primary-btn">Extract Text from Current Page</button>
+      <div id="extractStatus" class="status-message"></div>
+      <div id="extractPreview" class="text-preview"></div>
+    </div>
+
+    <!-- Cached Tab -->
+    <div id="cachedSection" class="tab-section">
+      <div class="section-header">
+        <h2>Cached Pages</h2>
+        <button id="clearCacheBtn" class="secondary-btn">Clear All</button>
+      </div>
+      <div id="cachedList" class="cached-list"></div>
+    </div>
+
+    <!-- Q&A Tab -->
+    <div id="qaSection" class="tab-section">
+      <div class="section-header">
+        <h2>Ask Questions</h2>
+      </div>
+      <div class="form-group">
+        <label for="sourceUrl">Select Source:</label>
+        <select id="sourceUrl" class="form-control">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="questionInput">Your Question:</label>
+        <textarea id="questionInput" class="form-control" rows="3" placeholder="Ask a question about the extracted text..."></textarea>
+      </div>
+      <button id="askQuestionBtn" class="primary-btn">Ask Question</button>
+      <div id="qaStatus" class="status-message"></div>
+      <div id="qaAnswer" class="answer-box"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settingsSection" class="tab-section">
+      <div class="section-header">
+        <h2>Ollama Settings</h2>
+      </div>
+      <div class="info-box">
+        <p>Configure your local Ollama instance. Make sure Ollama is running on your machine.</p>
+      </div>
+      <div class="form-group">
+        <label for="ollamaEndpoint">Ollama API Endpoint:</label>
+        <input type="text" id="ollamaEndpoint" class="form-control" placeholder="http://localhost:11434/api/generate" value="http://localhost:11434/api/generate">
+        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Default: http://localhost:11434/api/generate</small>
+      </div>
+      <div class="form-group">
+        <label for="ollamaModel">Model Name:</label>
+        <input type="text" id="ollamaModel" class="form-control" placeholder="llama2" value="llama2">
+        <small style="color: #888; font-size: 11px; display: block; margin-top: 4px;">Examples: llama2, mistral, llama3, codellama, etc.</small>
+      </div>
+      <button id="saveSettingsBtn" class="primary-btn">Save Settings</button>
+      <div id="settingsStatus" class="status-message"></div>
+      <div class="form-group" style="margin-top: 20px;">
+        <button id="testConnectionBtn" class="secondary-btn">Test Connection</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+
